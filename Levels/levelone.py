@@ -1,6 +1,6 @@
 import gym
 import numpy as np
-import block
+from .block import Block
 
 
 class LevelOne(gym.Env):
@@ -11,31 +11,26 @@ class LevelOne(gym.Env):
         self.block = Block(3, 6, 3, 6)
 
         # Numeric to grid mapping:
-        # -1 -> out of bounds
+        #  9 -> out of bounds
         #  0 -> normal tile
         #  4 -> goal
         #  8 -> block
 
         #  20 x 10 grid (with padding)
-        self.base_env = np.ndarray(
+        self.base_env = np.array(
             [
-                [-1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, -1, -1, -1, -1, -1, 0, 0, 4, 0, 0, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1,-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 0, 0, 0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 4, 0, 0, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 0, 9, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
             ]
         )
-
-        pass
-
-    def _get_obs(self):
-        return {"agent": self._agent_location, "target": self._target_location}
 
     def reset(self):
         # set both of the agent's coords to (3, 6) and (3, 6)
@@ -68,23 +63,32 @@ class LevelOne(gym.Env):
         done = False
 
         # check if the agent is out of bounds -> reset to the start
-        x1, y1, x2, y2 = self.block.get_coords()
-        if self.current_env[x1, y1] == -1 or self.current_env[x2, y2] == -1:
+        r1, c1, r2, c2 = self.block.get_coords()
+        if self.current_env[r1, c1] == 9 or self.current_env[r2, c2] == 9:
             # TODO: some levels may not reset when you fall off, hence manually resetting the block coordinates
             self.block.set_coords(3, 6, 3, 6)
 
         # check if the agent is on a button -> change the current_env to reflect this
 
         # check if the agent is on the goal -> set done to True and reward to 0
-        if self.current_env[x1, y1] == 4 and self.current_env[x2, y2] == 4:
+        if self.current_env[r1, c1] == 4 and self.current_env[r2, c2] == 4:
             reward = 0
             done = True
 
         # place the agent in the environment using its position
-        x1, y1, x2, y2 = self.block.get_coords()
+        r1, c1, r2, c2 = self.block.get_coords()
         state = np.copy(self.current_env)
-        state[x1, y1] = 8
-        state[x2, y2] = 8
+        state[r1, c1] = 8
+        state[r2, c2] = 8
         state = state.ravel()
 
         return state, reward, done
+    
+    def get_state(self):
+        r1, c1, r2, c2 = self.block.get_coords()
+        print(r1, c1, r2, c2)
+        state = np.copy(self.current_env)
+        state[r1, c1] = 8
+        state[r2, c2] = 8
+        
+        return state

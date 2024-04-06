@@ -20,9 +20,9 @@ class Block:
         self._r2 = r2
         self._c1 = c1
         self._c2 = c2
-        
+
     def get_coords(self):
-        return np.ndarray([self._r1, self._r2, self._c1, self._c2])
+        return self._r1, self._c1, self._r2, self._c2
 
     def isUpright(self):
         return self._r1 == self._r2 and self._c1 == self._c2
@@ -35,65 +35,69 @@ class Block:
     def moveUp(self):
         # vertical
         if self.isUpright():
-            self._r1 += 2
-            self._c1 += 1
+            self._r1 += 1
+            self._r2 += 2
 
         # flat and wide
         elif self.isWide():
-            self._c1 += 1
-            self._r1 += 1
+            self._r1 -= 1
+            self._r2 -= 1
 
         # flat and long
         else:
-            self._r1 += 1
-            self._c1 += 2
+            min_r = min(self._r1, self._r2)
+            self._r1 = min_r - 1
+            self._r2 = min_r - 1
 
     def moveDown(self):
         # vertical
         if self.isUpright():
-            self._r1 -= 1
-            self._c1 -= 2
+            self._r1 += 1
+            self._r2 += 2
 
         # flat and wide
         elif self.isWide():
-            self._r1 -= 1
-            self._c1 -= 1
+            self._r1 += 1
+            self._r2 += 1
 
         # flat and long
         else:
-            self._r1 -= 2
-            self._c1 -= 1
+            max_r = max(self._r1, self._r2)
+            self._r1 = max_r + 1
+            self._r2 = max_r + 1
 
     # edited
     def moveRight(self):
         # vertical
         if self.isUpright():
-            self._r2 += 2
-            self._c2 += 1
+            self._c1 += 1
+            self._c2 += 2
 
         # flat and wide
-        elif self.isWide:
-            self._r2 += 2
-            self._c2 += 1
+        elif self.isWide():
+            max_c = max(self._c1, self._c2)
+            self._c1 = max_c + 1
+            self._c2 = max_c + 1
 
         # flat and long
         else:
-            self._r2 += 1
+            self._c1 += 1
             self._c2 += 1
 
     # edited
     def moveLeft(self):
         # vertical
         if self.isUpright():
-            self._r2 -= 2
-            self._c2 -= 1
+            self._c1 -= 1
+            self._c2 -= 2
 
         # flat and wide
         elif self.isWide():
-            self._r2 -= 1
-            self._c2 -= 2
+            min_c = min(self._c1, self._c2)
+            self._c1 = min_c - 1
+            self._c2 = min_c - 1
 
         # flat and long
         else:
+            self._c1 -= 1
             self._c2 -= 1
-            self._r2 -= 1
