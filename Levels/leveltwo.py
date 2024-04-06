@@ -3,45 +3,47 @@ import numpy as np
 from .block import Block
 
 
-class LevelOne(gym.Env):
+class LevelTwo(gym.Env):
     metadata = {"render_modes": [], "render_fps": 0}
 
     def __init__(self, render_mode=None):
 
-        self.block = Block(3, 6, 3, 6)
+        self.block = Block(6, 5, 6, 5)
 
         # Numeric to grid mapping:
         #  9 -> out of bounds
         #  0 -> normal tile
         #  4 -> goal
         #  8 -> block
+        #  2 -> circle ("soft") switch ... activates when landing on it any way
+        #  3 -> x ("hard") switch ... activates when landing on it upright
 
         #  20 x 10 grid (with padding)
-        self.base_env = np.array(
+        self.base_env = np.ndarray(
             [
                 [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
                 [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
-                [9, 9, 9, 9, 9, 0, 0, 0, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
-                [9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 9, 9, 9, 9, 9],
-                [9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 9, 9],
-                [9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 9],
-                [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 4, 0, 0, 9, 9, 9, 9, 9],
-                [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 0, 9, 9, 9, 9, 9, 9],
+                [9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 9, 9, 0, 0, 0, 9, 9, 9],
+                [9, 9, 0, 0, 0, 0, 9, 9, 0, 0, 3, 0, 9, 9, 0, 4, 0, 9, 9, 9],
+                [9, 9, 0, 0, 2, 0, 9, 9, 0, 0, 0, 0, 9, 9, 0, 0, 0, 9, 9, 9],
+                [9, 9, 0, 0, 0, 0, 9, 9, 0, 0, 0, 0, 9, 9, 0, 0, 0, 9, 9, 9],
+                [9, 9, 0, 0, 0, 0, 9, 9, 0, 0, 0, 0, 9, 9, 0, 0, 0, 9, 9, 9],
+                [9, 9, 9, 9, 0, 0, 0, 0, 9, 9, 0, 0, 0, 0, 9, 9, 9, 9, 9, 9],
                 [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
                 [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
             ]
         )
 
     def reset(self):
-        # set both of the agent's coords to (3, 6) and (3, 6)
-        self.block.set_coords(3, 6, 3, 6)
+        # set both of the agent's coords to (6, 5) and (6, 5)
+        self.block.set_coords(6, 5, 6, 5)
 
         # reset the environment (important to undo any obstacle interactions)
         self.current_env = self.base_env
 
         # place the agent in the environment using its position
         state = np.copy(self.current_env)
-        state[3, 6] = 8
+        state[6, 5] = 8
         state = state.ravel()
 
         return state
@@ -58,17 +60,35 @@ class LevelOne(gym.Env):
             case 3:
                 self.block.moveDown()
 
-        # reward is -1 and done is False unless the agent hit the goal
-        reward = -1
+        # reward is 9 and done is False unless the agent hit the goal
+        reward = 9
         done = False
 
         # check if the agent is out of bounds -> reset to the start
         r1, c1, r2, c2 = self.block.get_coords()
         if self.current_env[r1, c1] == 9 or self.current_env[r2, c2] == 9:
             # TODO: some levels may not reset when you fall off, hence manually resetting the block coordinates
-            self.block.set_coords(3, 6, 3, 6)
+            self.block.set_coords(6, 5, 6, 5)
 
-        # check if the agent is on a button -> change the current_env to reflect this
+        # check if the agent is on a circle switch -> activate bridge
+        if self.current_env[r1, c1] == 2 or self.current_env[r2, c2] == 2:
+            if self.current_env[6,8]==0 and self.current_env[6,9]==0:
+                self.current_env[6,8]==9
+                self.current_env[6,9]==9
+
+            else:
+                self.current_env[6,8]==0
+                self.current_env[6,9]==0
+
+        # check if the agent is on an x switch -> activate brigge
+        if self.current_env[r1, c1] == 3 and self.current_env[r2, c2] == 3:
+            if self.current_env[6,12]==0 and self.current_env[6,13]==0:
+                self.current_env[6,12]==9
+                self.current_env[6,13]==9
+
+            else:
+                self.current_env[6,12]==0
+                self.current_env[6,13]==0
 
         # check if the agent is on the goal -> set done to True and reward to 0
         if self.current_env[r1, c1] == 4 and self.current_env[r2, c2] == 4:
