@@ -19,7 +19,7 @@ class LevelTwo(gym.Env):
         #  3 -> x ("hard") switch ... activates when landing on it upright
 
         #  20 x 10 grid (with padding)
-        self.base_env = np.ndarray(
+        self.base_env = np.array(
             [
                 [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
                 [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
@@ -45,6 +45,7 @@ class LevelTwo(gym.Env):
         state = np.copy(self.current_env)
         state[6, 5] = 8
         state = state.ravel()
+        state = np.array2string(state, separator='')
 
         return state
 
@@ -61,7 +62,7 @@ class LevelTwo(gym.Env):
                 self.block.moveDown()
 
         # reward is 9 and done is False unless the agent hit the goal
-        reward = 9
+        reward = -1
         done = False
 
         # check if the agent is out of bounds -> reset to the start
@@ -101,14 +102,15 @@ class LevelTwo(gym.Env):
         state[r1, c1] = 8
         state[r2, c2] = 8
         state = state.ravel()
+        state = np.array2string(state, separator='')
 
         return state, reward, done
-    
+
     def get_state(self):
         r1, c1, r2, c2 = self.block.get_coords()
         print(r1, c1, r2, c2)
         state = np.copy(self.current_env)
         state[r1, c1] = 8
         state[r2, c2] = 8
-        
+
         return state

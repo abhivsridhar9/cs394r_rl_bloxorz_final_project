@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
-from Levels.levelone import LevelOne
+from levels.levelone import LevelOne
+from levels.leveltwo import LevelTwo
 
 
 def parse():
@@ -40,8 +41,13 @@ def eps_greedy_action_select(Q, s, eps=1e-4):
 if __name__ == '__main__':
     args = parse()
 
+    print("Args: ",args)
+
     if args.level == 1:
         env = LevelOne()
+
+    elif args.level==2:
+        env=LevelTwo()
 
     # 0 -> Right
     # 1 -> Up
@@ -49,7 +55,7 @@ if __name__ == '__main__':
     # 3 -> Down
     Q = [{}, {}, {}, {}]
 
-    for _ in range(args.num_episodes):
+    for _ in range(int(args.num_episodes)):
         s, done = env.reset(), False
 
         while not done:
@@ -58,6 +64,8 @@ if __name__ == '__main__':
             Q_prime, _ = eps_greedy_action_select(Q, s_prime, eps=0)
             Q[a][s] = Q[a][s] + args.alpha * (r + args.gamma * Q_prime - Q[a][s])
             s = s_prime
+
+            print("S: ",s)
 
     # Final Route
     act_to_lang = {
