@@ -43,6 +43,7 @@ class LevelOne(gym.Env):
         state = np.copy(self.current_env)
         state[3, 6] = 8
         state = state.ravel()
+        state = np.array2string(state, separator='')
 
         return state
 
@@ -81,6 +82,7 @@ class LevelOne(gym.Env):
         state[r1, c1] = 8
         state[r2, c2] = 8
         state = state.ravel()
+        state = np.array2string(state, separator='')
 
         return state, reward, done
     
