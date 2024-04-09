@@ -8,7 +8,10 @@ class LevelThree(gym.Env):
 
     def __init__(self, render_mode=None):
 
-        self.block = Block(4, 3, 4, 3)
+        self.r_start=4
+        self.c_start=3
+
+        self.block = Block(self.r_start,self.c_start,self.r_start,self.c_start)
 
         # Numeric to grid mapping:
         #  9 -> out of bounds
@@ -32,22 +35,39 @@ class LevelThree(gym.Env):
             ]
         )
 
+
     def reset(self):
-        # set both of the agent's coords to (4, 3) and (4, 3)
-        self.block.set_coords(4, 3, 4, 3)
+        # set both of the agent's coords to (self.r_start,self.c_start) and (self.r_start,self.c_start)
+        self.block.set_coords(self.r_start,self.c_start,self.r_start,self.c_start)
 
         # reset the environment (important to undo any obstacle interactions)
         self.current_env = self.base_env
 
         # place the agent in the environment using its position
         state = np.copy(self.current_env)
-        state[4, 3] = 8
+        state[self.r_start,self.c_start] = 8
         state = state.ravel()
         state = np.array2string(state, separator='')
 
         return state
 
     def step(self, action,final_route):
+        def moveToStart():
+            if self.current_env[r1, c1] == 9 or self.current_env[r2, c2] == 9:
+                # TODO: some levels may not reset when you fall off, hence manually resetting the block coordinates
+                self.block.set_coords(self.r_start,self.c_start,self.r_start,self.c_start)
+
+        def isDone():
+            # check if the agent is on the goal -> set done to True and reward to 0
+            reward =-1
+            done =False
+
+            if self.current_env[r1, c1] == 4 and self.current_env[r2, c2] == 4:
+                reward = 0
+                done = True
+
+
+            return reward,done
         # update the agent's coords by passing it the action
         match action:
             case 0:
