@@ -35,8 +35,8 @@ class Block:
     def moveUp(self):
         # vertical
         if self.isUpright():
-            self._r1 += 1
-            self._r2 += 2
+            self._r1 -= 1
+            self._r2 -= 2
 
         # flat and wide
         elif self.isWide():
