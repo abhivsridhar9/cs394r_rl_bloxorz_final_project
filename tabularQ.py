@@ -4,7 +4,8 @@ from levels.level_one import LevelOne
 from levels.level_two import LevelTwo
 from levels.level_three import LevelThree
 from levels.level_four import LevelFour
-from levels.level_env_config import level_one_env, level_two_env, level_three_env, level_four_env
+from levels.level_five import LevelFive
+from levels.level_env_config import level_one_env, level_two_env, level_three_env, level_four_env, level_five_env
 
 
 def parse():
@@ -58,6 +59,9 @@ if __name__ == "__main__":
 
     elif args.level == 4:
         env = LevelFour((6, 4), level_four_env)
+
+    elif args.level == 5:
+        env = LevelFive((2, 15), level_five_env)
 
     # 0 -> Right
     # 1 -> Up
