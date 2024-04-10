@@ -30,8 +30,6 @@ class Block:
     def isWide(self):
         return self._r1 == self._r2 and self._c1 != self._c2
 
-        return False
-
     def move_up(self):
         # vertical
         if self.isUpright():
@@ -101,3 +99,7 @@ class Block:
         else:
             self._c1 -= 1
             self._c2 -= 1
+
+    def switch_focus(self):
+        # TODO: Implement this function
+        pass

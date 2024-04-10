@@ -29,6 +29,7 @@ class Level(gym.Env):
             1: self._block.move_up,
             2: self._block.move_left,
             3: self._block.move_down,
+            4: self._block.switch_focus
         }
 
     def step(self, action):
@@ -40,9 +41,11 @@ class Level(gym.Env):
 
         reward, done = self._is_done(r1, c1, r2, c2)
 
-        self._move_to_start(r1, c1, r2, c2)
-        self._toggle_circle_switches(r1, c1, r2, c2)
-        self._toggle_x_switches(r1, c1, r2, c2)
+        # only check for environment changes if the action is not "Switch Focus"
+        if action != 4:
+            self._move_to_start(r1, c1, r2, c2)
+            self._toggle_circle_switches(r1, c1, r2, c2)
+            self._toggle_x_switches(r1, c1, r2, c2)
 
         state = self._format_environment()
 
@@ -99,19 +102,29 @@ class Level(gym.Env):
         for c in self._circle_switches:
             switch_location = c["switch_location"]
             toggle_tiles = c["toggle_tiles"]
+            mode = c["mode"]
 
             if (r1 == switch_location[0] and c1 == switch_location[1]) or (
                 r2 == switch_location[0] and c2 == switch_location[1]
             ):
-                if self._current_env[toggle_tiles[0][0], toggle_tiles[0][1]] == 0:
-                    for t in toggle_tiles:
-                        self._current_env[t[0], t[1]] = 9
-                        self._current_env[t[0], t[1]] = 9
+                if mode == "toggle":
+                    if self._current_env[toggle_tiles[0][0], toggle_tiles[0][1]] == 0:
+                        for t in toggle_tiles:
+                            self._current_env[t[0], t[1]] = 9
+                            self._current_env[t[0], t[1]] = 9
 
-                else:
+                    else:
+                        for t in toggle_tiles:
+                            self._current_env[t[0], t[1]] = 0
+                            self._current_env[t[0], t[1]] = 0
+                elif mode == "on":
                     for t in toggle_tiles:
                         self._current_env[t[0], t[1]] = 0
                         self._current_env[t[0], t[1]] = 0
+                elif mode == "off":
+                    for t in toggle_tiles:
+                        self._current_env[t[0], t[1]] = 9
+                        self._current_env[t[0], t[1]] = 9
 
     def _toggle_x_switches(self, r1, c1, r2, c2):
         # check if the agent is on an x switch -> activate bridge

@@ -25,11 +25,11 @@ def eps_greedy_action_select(Q, s, eps=0.01):
 
     """
     if np.random.uniform() < eps:
-        return -1, np.random.randint(0, 3)
+        return -1, np.random.randint(0, 4)
     else:
         max_Q = np.float64("-inf")
         a = 0
-        for i in range(0, 4):
+        for i in range(0, 5):
             if s not in Q[i]:
                 Q[i][s] = 0  # instantiate this state, action pair if it does not exist
             Q_i = Q[i][s]
@@ -84,7 +84,8 @@ if __name__ == "__main__":
     # 1 -> Up
     # 2 -> Left
     # 3 -> Down
-    Q = [{}, {}, {}, {}]
+    # 5 -> Switch Focus
+    Q = [{}, {}, {}, {}, {}]
 
     for e in range(args.num_episodes):
         s, done = env.reset(), False
@@ -96,13 +97,11 @@ if __name__ == "__main__":
             Q[a][s] = Q[a][s] + args.alpha * (r + args.gamma * Q_prime - Q[a][s])
             s = s_prime
 
-            # print("Action: ",a)
-
     # Final Route
-    act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down"}
+    act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
     print("----- Final Route ----- ")
     s, done = env.reset(), False
-    print(env.get_state())
+
     r_total = 0
     step = 1
     while not done:
