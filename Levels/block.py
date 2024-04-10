@@ -32,7 +32,7 @@ class Block:
 
         return False
 
-    def moveUp(self):
+    def move_up(self):
         # vertical
         if self.isUpright():
             self._r1 -= 1
@@ -49,7 +49,7 @@ class Block:
             self._r1 = min_r - 1
             self._r2 = min_r - 1
 
-    def moveDown(self):
+    def move_down(self):
         # vertical
         if self.isUpright():
             self._r1 += 1
@@ -67,7 +67,7 @@ class Block:
             self._r2 = max_r + 1
 
     # edited
-    def moveRight(self):
+    def move_right(self):
         # vertical
         if self.isUpright():
             self._c1 += 1
@@ -85,7 +85,7 @@ class Block:
             self._c2 += 1
 
     # edited
-    def moveLeft(self):
+    def move_left(self):
         # vertical
         if self.isUpright():
             self._c1 -= 1
