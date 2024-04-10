@@ -6,7 +6,7 @@ from levels.env_config import *
 
 def parse():
     parser = argparse.ArgumentParser(description="Tabular Q-Learning")
-    parser.add_argument("--num_episodes", default=1000)
+    parser.add_argument("--num_episodes", default=5000, type=int)
     parser.add_argument("--level", default=1, type=int)
     parser.add_argument("--gamma", default=1)
     parser.add_argument("--alpha", default=0.1)
@@ -14,7 +14,7 @@ def parse():
     return args
 
 
-def eps_greedy_action_select(Q, s, eps=1e-2):
+def eps_greedy_action_select(Q, s, eps=0.01):
     """
     Chooses an action following the epsilon greedy policy.
     Inputs:
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down"}
     print("----- Final Route ----- ")
     s, done = env.reset(), False
-
+    print(env.get_state())
     r_total = 0
     step = 1
     while not done:

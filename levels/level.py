@@ -20,6 +20,7 @@ class Level(gym.Env):
         self._block = Block(self._r_start, self._c_start, self._r_start, self._c_start)
 
         self._base_env = base_env
+
         self._circle_switches = circle_switches
         self._x_switches = x_switches
 
@@ -54,7 +55,7 @@ class Level(gym.Env):
         )
 
         # reset the environment (important to undo any obstacle interactions)
-        self._current_env = self._base_env
+        self._current_env = np.copy(self._base_env)
 
         # place the agent in the environment using its position
         state = np.copy(self._current_env)
@@ -66,10 +67,7 @@ class Level(gym.Env):
 
     def _move_to_start(self, r1, c1, r2, c2):
         if self._current_env[r1, c1] == 9 or self._current_env[r2, c2] == 9:
-            # TODO: some levels may not reset when you fall off, hence manually resetting the block coordinates
-            self._block.set_coords(
-                self._r_start, self._c_start, self._r_start, self._c_start
-            )
+            self.reset()
 
     def _is_done(self, r1, c1, r2, c2):
         # check if the agent is on the goal -> set done to True and reward to 0
