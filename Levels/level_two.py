@@ -10,9 +10,16 @@ class LevelTwo(Level):
         self,
         start_pos: tuple,
         base_env: np.array([]),
+        circle_switches=np.array([]),
+        x_switches=np.array([]),
         render_mode=None,
     ):
-        super().__init__(start_pos, base_env)
+        super().__init__(
+            start_pos=start_pos,
+            base_env=base_env,
+            circle_switches=circle_switches,
+            x_switches=x_switches,
+        )
 
         # Numeric to grid mapping:
         #  9 -> out of bounds
@@ -27,13 +34,13 @@ class LevelTwo(Level):
         self._perform_action(action)
 
         # check if the agent is out of bounds -> reset to the start
-        r1, c1, r2, c2 = self.block.get_coords()
+        r1, c1, r2, c2 = self._block.get_coords()
 
-        reward, done = self._is_done(r1,c1,r2,c2)
+        reward, done = self._is_done(r1, c1, r2, c2)
 
-        self._move_to_start(r1,c1,r2,c2)
-        self._toggle_circle_switch(r1, c1, r2, c2, np.array([(6, 6), (6, 7)]))
-        self._toggle_x_switch(r1, c1, r2, c2, np.array([(6, 12), (6, 13)]))
+        self._move_to_start(r1, c1, r2, c2)
+        self._toggle_circle_switches(r1, c1, r2, c2)
+        self._toggle_x_switches(r1, c1, r2, c2)
 
         state = self._format_environment()
 

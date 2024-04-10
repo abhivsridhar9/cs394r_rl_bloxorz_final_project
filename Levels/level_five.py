@@ -27,13 +27,13 @@ class LevelFive(Level):
         self._perform_action(action)
 
         # check if the agent is out of bounds -> reset to the start
-        r1, c1, r2, c2 = self.block.get_coords()
+        r1, c1, r2, c2 = self._block.get_coords()
 
         reward, done = self._is_done(r1,c1,r2,c2)
 
         self._move_to_start(r1,c1,r2,c2)
-        self._toggle_circle_switch(r1, c1, r2, c2, np.array([(2, 7), (2, 8)]))
-        self._toggle_circle_switch(r1, c1, r2, c2, np.array([(2, 7), (2, 8)]))
+        self._toggle_circle_switches(r1, c1, r2, c2, np.array([(2, 7), (2, 8)]))
+        self._toggle_circle_switches(r1, c1, r2, c2, np.array([(2, 7), (2, 8)]))
 
         state = self._format_environment()
 

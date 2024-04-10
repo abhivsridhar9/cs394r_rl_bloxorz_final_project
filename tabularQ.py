@@ -1,11 +1,7 @@
 import argparse
 import numpy as np
-from levels.level_one import LevelOne
-from levels.level_two import LevelTwo
-from levels.level_three import LevelThree
-from levels.level_four import LevelFour
-from levels.level_five import LevelFive
-from levels.level_env_config import level_one_env, level_two_env, level_three_env, level_four_env, level_five_env
+from levels.level import Level
+from levels.level_env_config import *
 
 
 def parse():
@@ -49,19 +45,28 @@ if __name__ == "__main__":
     print("Args: ", args)
 
     if args.level == 1:
-        env = LevelOne((3, 6), level_one_env)
+        env = Level(start_pos=(3, 6), base_env=level_one_env)
 
     elif args.level == 2:
-        env = LevelTwo((6, 3), level_two_env)
+        env = Level(
+            start_pos=(6, 3),
+            base_env=level_two_env,
+            circle_switches=level_two_circle_switches,
+            x_switches=level_two_x_switches,
+        )
 
     elif args.level == 3:
-        env = LevelThree((4, 3), level_three_env)
+        env = Level(start_pos=(4, 3), base_env=level_three_env)
 
     elif args.level == 4:
-        env = LevelFour((6, 4), level_four_env)
+        env = Level(start_pos=(6, 4), base_env=level_four_env)
 
     elif args.level == 5:
-        env = LevelFive((2, 15), level_five_env)
+        env = Level(
+            start_pos=(2, 15),
+            base_env=level_five_env,
+            circle_switches=level_five_circle_switches,
+        )
 
     # 0 -> Right
     # 1 -> Up
