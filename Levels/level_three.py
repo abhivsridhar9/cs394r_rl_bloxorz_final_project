@@ -14,7 +14,7 @@ class LevelThree(Level):
     ):
         super().__init__(start_pos, base_env)
 
-    def step(self, action, final_route):
+    def step(self, action):
         # update the agent's coords by passing it the action
 
         self._perform_action(action)

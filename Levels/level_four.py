@@ -4,7 +4,7 @@ from .block import Block
 from .level import Level
 
 
-class LevelOne(Level):
+class LevelFour(Level):
 
     def __init__(
         self,
@@ -14,7 +14,7 @@ class LevelOne(Level):
     ):
         super().__init__(start_pos, base_env)
 
-    def step(self, action, final_route):
+    def step(self, action):
         # update the agent's coords by passing it the action
 
         self._perform_action(action)
@@ -25,6 +25,7 @@ class LevelOne(Level):
         reward, done = self._is_done(r1, c1, r2, c2)
 
         self._move_to_start(r1, c1, r2, c2)
+        self._handle_orange_tile(r1, c1, r2, c2)
 
         state = self._format_environment()
 

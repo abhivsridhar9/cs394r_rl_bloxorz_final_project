@@ -10,11 +10,9 @@ class LevelTwo(Level):
         self,
         start_pos: tuple,
         base_env: np.array([]),
-        circle_switches=None,
-        x_switches=None,
         render_mode=None,
     ):
-        super().__init__(start_pos, base_env,circle_switches,x_switches)
+        super().__init__(start_pos, base_env)
 
         # Numeric to grid mapping:
         #  9 -> out of bounds

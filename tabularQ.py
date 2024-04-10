@@ -1,9 +1,10 @@
 import argparse
 import numpy as np
-from levels.levelone import LevelOne
-from levels.leveltwo import LevelTwo
-from levels.levelthree import LevelThree
-from levels.level_env_config import level_one_env, level_two_env, level_three_env
+from levels.level_one import LevelOne
+from levels.level_two import LevelTwo
+from levels.level_three import LevelThree
+from levels.level_four import LevelFour
+from levels.level_env_config import level_one_env, level_two_env, level_three_env, level_four_env
 
 
 def parse():
@@ -54,6 +55,9 @@ if __name__ == "__main__":
 
     elif args.level == 3:
         env = LevelThree((4, 3), level_three_env)
+
+    elif args.level == 4:
+        env = LevelFour((6, 4), level_four_env)
 
     # 0 -> Right
     # 1 -> Up

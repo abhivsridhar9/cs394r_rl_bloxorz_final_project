@@ -7,7 +7,7 @@ from .block import Block
 class Level(gym.Env, ABC):
     metadata = {"render_modes": [], "render_fps": 0}
 
-    def __init__(self, start_pos: tuple, base_env: np.array([]), circle_switches=None,x_switches=None,render_mode=None):
+    def __init__(self, start_pos: tuple, base_env: np.array([]), render_mode=None):
         self.r_start = start_pos[0]
         self.c_start = start_pos[1]
 
@@ -15,10 +15,7 @@ class Level(gym.Env, ABC):
 
         self.base_env = base_env
 
-        self.circle_switches=circle_switches
-        self.x_switches=x_switches
-
-        self.action_map = {
+        self.actions = {
             0: self.block.move_right,
             1: self.block.move_up,
             2: self.block.move_left,
@@ -105,6 +102,21 @@ class Level(gym.Env, ABC):
                     self.current_env[t[0], t[1]] = 0
                     self.current_env[t[0], t[1]] = 0
 
+    def _handle_orange_tile(self, r1, c1, r2, c2):
+        # Check if both parts of the agent are on the same (orange) tile
+        if (r1, c1) == (r2, c2):
+            # Check if the tile is indeed an orange tile
+            if self.current_env[r1, c1] == 1:
+                # The tile disappears (or the agent falls through the grid)
+                # This can be represented by setting the tile to a value that indicates it's no longer solid
+           
+                self.block.set_coords(
+                    self.r_start, self.c_start, self.r_start, self.c_start
+                )
+                # Handle the game over or life lost logic here
+
+        # If the agent is not standing vertically on the tile, it remains unaffected
+
     def get_state(self):
         r1, c1, r2, c2 = self.block.get_coords()
         print(r1, c1, r2, c2)
@@ -114,10 +126,9 @@ class Level(gym.Env, ABC):
 
         return state
 
-
     def _perform_action(self, action):
-        # Get the corresponding method from 'action_map' and call it
-        action_method = self.action_map.get(action)
+        # Get the corresponding method from 'actions' and call it
+        action_method = self.actions.get(action)
         if action_method:
             action_method()
         else:
