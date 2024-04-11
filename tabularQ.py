@@ -51,8 +51,8 @@ if __name__ == "__main__":
         env = Level(
             start_pos=(6, 3),
             base_env=level_two_env,
-            circle_switches=level_two_circle_switches,
-            x_switches=level_two_x_switches,
+            soft_switches=level_two_soft_switches,
+            hard_switches=level_two_hard_switches,
         )
 
     elif args.level == 3:
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         env = Level(
             start_pos=(2, 15),
             base_env=level_five_env,
-            circle_switches=level_five_circle_switches,
+            soft_switches=level_five_soft_switches,
         )
     elif args.level == 6:
         env = Level(
@@ -77,7 +77,14 @@ if __name__ == "__main__":
         env = Level(
             start_pos=(4, 4),
             base_env=level_seven_env,
-            x_switches=level_seven_x_switches
+            hard_switches=level_seven_hard_switches
+        )
+
+    elif args.level == 8:
+        env = Level(
+            start_pos=(6, 4),
+            base_env=level_seven_env,
+            hard_switches=level_seven_hard_switches
         )
 
     # 0 -> Right
