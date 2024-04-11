@@ -12,6 +12,7 @@ class Level(gym.Env):
         base_env: np.array([]),
         soft_switches=np.array([]),
         hard_switches=np.array([]),
+        teleport_switches=np.array([]),
         render_mode=None,
     ):
         self._r_start = start_pos[0]
@@ -23,13 +24,14 @@ class Level(gym.Env):
 
         self._soft_switches = soft_switches
         self._hard_switches = hard_switches
+        self._teleport_switches = teleport_switches
 
         self._actions = {
             0: self._block.move_right,
             1: self._block.move_up,
             2: self._block.move_left,
             3: self._block.move_down,
-            4: self._block.switch_focus,
+            4: self._block.set_focus_block,
         }
 
     def step(self, action):
@@ -47,6 +49,7 @@ class Level(gym.Env):
         # only check for environment changes if the action is not "Switch Focus"
         if action != 4:
             self._move_to_start(r1, c1, r2, c2)
+            self._activate_teleport_switch(r1,c1,r2,c2)
             self._toggle_soft_switches(r1, c1, r2, c2)
             self._toggle_hard_switches(r1, c1, r2, c2)
 
@@ -147,6 +150,30 @@ class Level(gym.Env):
                     for t in toggle_tiles:
                         self._current_env[t[0], t[1]] = 0
                         self._current_env[t[0], t[1]] = 0
+
+
+    def _activate_teleport_switch(self,r1,c1,r2,c2):
+        # check if block is on teleport switch -> split block into two single blocks
+        for t in self._teleport_switches:
+            switch_location = c["switch_location"]
+            split_positions = c["split_positions"]
+
+            if (r1 == switch_location[0] and c1 == switch_location[1]) and (
+                r2 == switch_location[0] and c2 == switch_location[1]
+            ):
+
+                single_block_one=split_positions[0]
+                single_block_two=split_positions[2]
+
+                r1=single_block_one[0]
+                c1=single_block_one[1]
+
+                r2=single_block_two[0]
+                c2=single_block_two[0]
+
+                self._block.set_focus_block(1)
+
+
 
     def _handle_orange_tile(self, r1, c1, r2, c2):
         # check if block is vertical
