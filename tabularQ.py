@@ -6,7 +6,7 @@ from levels.env_config import *
 
 def parse():
     parser = argparse.ArgumentParser(description="Tabular Q-Learning")
-    parser.add_argument("--num_episodes", default=5000, type=int)
+    parser.add_argument("--num_episodes", default=1000, type=int)
     parser.add_argument("--level", default=1, type=int)
     parser.add_argument("--gamma", default=1)
     parser.add_argument("--alpha", default=0.1)
@@ -83,8 +83,14 @@ if __name__ == "__main__":
     elif args.level == 8:
         env = Level(
             start_pos=(6, 4),
-            base_env=level_seven_env,
-            hard_switches=level_seven_hard_switches
+            base_env=level_eight_env,
+            teleport_switches=level_eight_teleport_switches
+        )
+    elif args.level == 9:
+        env = Level(
+            start_pos=(4, 4),
+            base_env=level_nine_env,
+            teleport_switches=level_nine_teleport_switches
         )
 
     # 0 -> Right
@@ -94,8 +100,11 @@ if __name__ == "__main__":
     # 5 -> Switch Focus
     Q = [{}, {}, {}, {}, {}]
 
+    act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
+
     for e in range(args.num_episodes):
         s, done = env.reset(), False
+        print("Episode: ",e)
 
         while not done:
             _, a = eps_greedy_action_select(Q, s)
@@ -104,16 +113,16 @@ if __name__ == "__main__":
             Q[a][s] = Q[a][s] + args.alpha * (r + args.gamma * Q_prime - Q[a][s])
             s = s_prime
 
+    print("Done: ",done)
+
     # Final Route
-    act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
     print("----- Final Route ----- ")
     s, done = env.reset(), False
-
     r_total = 0
     step = 1
     while not done:
-        _, a = eps_greedy_action_select(Q, s, 0)
-        r_total += r
+        _, a = eps_greedy_action_select(Q, s,0)
         s, r, done = env.step(a)
         print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
+        r_total+=1
         step += 1

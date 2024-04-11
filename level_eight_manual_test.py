@@ -3,16 +3,15 @@ from levels.env_config import *
 
 
 l8 = Level(
-    start_pos=(6, 3),
-    base_env=level_two_env,
-    circle_switches=level_two_circle_switches,
-    x_switches=level_two_x_switches,
+    start_pos=(6, 4),
+    base_env=level_eight_env,
+    teleport_switches=level_eight_teleport_switches,
 )
 l8.reset()
 print(l8.get_state())
 
-# go up
-l8.step(1)
+# go right
+l8.step(0)
 print(l8.get_state())
 
 # go right
@@ -21,34 +20,6 @@ print(l8.get_state())
 
 # go down
 l8.step(3)
-print(l8.get_state())
-
-# go right
-l8.step(0)
-print(l8.get_state())
-
-# go right
-l8.step(0)
-print(l8.get_state())
-
-# go right
-l8.step(0)
-print(l8.get_state())
-
-# go up
-l8.step(1)
-print(l8.get_state())
-
-# go up
-l8.step(1)
-print(l8.get_state())
-
-# go up
-l8.step(1)
-print(l8.get_state())
-
-# go right
-l8.step(0)
 print(l8.get_state())
 
 # go down
@@ -67,24 +38,91 @@ print(l8.get_state())
 l8.step(0)
 print(l8.get_state())
 
-# go right
-l8.step(0)
-print(l8.get_state())
-
-# go right
-l8.step(0)
+# switch focus block
+l8.step(4)
 print(l8.get_state())
 
 # go up
 l8.step(1)
 print(l8.get_state())
-
-# go left
-l8.step(2)
-print(l8.get_state())
-
+print(l8.get_block().get_focus())
 
 # go up
-_, _, done = l8.step(1)
+l8.step(1)
+print(l8.get_state())
+print(l8.get_block().get_focus())
+
+# go up
+l8.step(1)
+print(l8.get_state())
+print(l8.get_block().get_focus())
+
+# go right
+l8.step(0)
+print(l8.get_state())
+
+# go right
+_, _, done = l8.step(0)
 print(l8.get_state())
 print(done)
+# # go right
+# l8.step(0)
+# print(l8.get_state())
+
+# # go right
+# l8.step(0)
+# print(l8.get_state())
+
+# # go right
+# l8.step(0)
+# print(l8.get_state())
+
+
+# # go up
+# l8.step(1)
+# print(l8.get_state())
+
+# # go up
+# l8.step(1)
+# print(l8.get_state())
+
+# # go right
+# l8.step(0)
+# print(l8.get_state())
+
+# # go down
+# l8.step(3)
+# print(l8.get_state())
+
+# # go down
+# l8.step(3)
+# print(l8.get_state())
+
+# # go right
+# l8.step(0)
+# print(l8.get_state())
+
+# # go right
+# l8.step(0)
+# print(l8.get_state())
+
+# # go right
+# l8.step(0)
+# print(l8.get_state())
+
+# # go right
+# l8.step(0)
+# print(l8.get_state())
+
+# # go up
+# l8.step(1)
+# print(l8.get_state())
+
+# # go left
+# l8.step(2)
+# print(l8.get_state())
+
+
+# # go up
+
+

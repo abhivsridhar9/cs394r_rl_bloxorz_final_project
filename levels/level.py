@@ -49,9 +49,11 @@ class Level(gym.Env):
         # only check for environment changes if the action is not "Switch Focus"
         if action != 4:
             self._move_to_start(r1, c1, r2, c2)
-            self._activate_teleport_switch(r1,c1,r2,c2)
+            self._activate_teleport_switch(r1, c1, r2, c2)
             self._toggle_soft_switches(r1, c1, r2, c2)
             self._toggle_hard_switches(r1, c1, r2, c2)
+
+
 
         state = self._format_environment()
 
@@ -151,29 +153,28 @@ class Level(gym.Env):
                         self._current_env[t[0], t[1]] = 0
                         self._current_env[t[0], t[1]] = 0
 
-
-    def _activate_teleport_switch(self,r1,c1,r2,c2):
+    def _activate_teleport_switch(self, r1, c1, r2, c2):
         # check if block is on teleport switch -> split block into two single blocks
         for t in self._teleport_switches:
-            switch_location = c["switch_location"]
-            split_positions = c["split_positions"]
+            switch_location = t["switch_location"]
+            split_positions = t["split_positions"]
+
 
             if (r1 == switch_location[0] and c1 == switch_location[1]) and (
                 r2 == switch_location[0] and c2 == switch_location[1]
             ):
 
-                single_block_one=split_positions[0]
-                single_block_two=split_positions[2]
+                single_block_one = split_positions[0]
+                single_block_two = split_positions[1]
 
-                r1=single_block_one[0]
-                c1=single_block_one[1]
+                r1 = single_block_one[0]
+                c1 = single_block_one[1]
 
-                r2=single_block_two[0]
-                c2=single_block_two[0]
+                r2 = single_block_two[0]
+                c2 = single_block_two[1]
 
                 self._block.set_focus_block(1)
-
-
+                self._block.set_coords(r1, c1, r2, c2)
 
     def _handle_orange_tile(self, r1, c1, r2, c2):
         # check if block is vertical
@@ -194,6 +195,7 @@ class Level(gym.Env):
         action_method = self._actions.get(action)
         if action_method:
             action_method()
+
         else:
             print("Invalid action")
 
@@ -203,3 +205,8 @@ class Level(gym.Env):
         state = np.copy(self._current_env)
         state[r1, c1] = 8
         state[r2, c2] = 8
+
+        return state
+
+    def get_block(self):
+        return self._block
