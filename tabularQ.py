@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
 from levels.level import Level
 from levels.env_config import *
 
@@ -8,8 +9,10 @@ def parse():
     parser = argparse.ArgumentParser(description="Tabular Q-Learning")
     parser.add_argument("--num_episodes", default=1000, type=int)
     parser.add_argument("--level", default=1, type=int)
-    parser.add_argument("--gamma", default=1)
-    parser.add_argument("--alpha", default=0.1)
+    parser.add_argument("--gamma", default=1, type=float)
+    parser.add_argument("--alpha", default=0.1, type=float)
+    parser.add_argument("--vis", action="store_true")
+    parser.set_defaults(vis=False)
     args = parser.parse_args()
     return args
 
@@ -37,6 +40,17 @@ def eps_greedy_action_select(Q, s, eps=0.01):
                 max_Q = Q_i
                 a = i
         return max_Q, a
+    
+
+def validate(Q):
+    s, done = env.reset(), False
+    r_total = 0
+    step = 1
+    while not done and step < 200:
+        _, a = eps_greedy_action_select(Q, s, 0)
+        s, r, done = env.step(a)
+        r_total += r
+        step += 1
 
 
 if __name__ == "__main__":
@@ -104,23 +118,31 @@ if __name__ == "__main__":
 
     for e in range(args.num_episodes):
         s, done = env.reset(), False
-        print("Episode: ",e)
 
+        steps = 0
+        r_total = 0
         while not done:
             _, a = eps_greedy_action_select(Q, s)
             s_prime, r, done = env.step(a)
             Q_prime, _ = eps_greedy_action_select(Q, s_prime, eps=0)
             Q[a][s] = Q[a][s] + args.alpha * (r + args.gamma * Q_prime - Q[a][s])
             s = s_prime
+            
+            r_total += r
+            # print(f'Action: {a} | Focus: {env.get_block().get_focus()} | Reward: {r_total}')
+            # print(env.get_state())
+            # if steps % 200 == 0:
+            #     input("Press enter to continue...")
+            steps += 1
 
-    print("Done: ",done)
+        print(f'Finished ep {e}, total return: {r_total}')
 
     # Final Route
     print("----- Final Route ----- ")
     s, done = env.reset(), False
     r_total = 0
     step = 1
-    while not done:
+    while not done and step < 200:
         _, a = eps_greedy_action_select(Q, s,0)
         s, r, done = env.step(a)
         print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")

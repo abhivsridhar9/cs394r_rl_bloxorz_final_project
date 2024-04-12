@@ -31,7 +31,7 @@ class Level(gym.Env):
             1: self._block.move_up,
             2: self._block.move_left,
             3: self._block.move_down,
-            4: self._block.set_focus_block,
+            4: self._block.toggle_focus,
         }
 
     def step(self, action):
@@ -64,6 +64,7 @@ class Level(gym.Env):
         self._block.set_coords(
             self._r_start, self._c_start, self._r_start, self._c_start
         )
+        self._block.set_focus(0)
 
         # reset the environment (important to undo any obstacle interactions)
         self._current_env = np.copy(self._base_env)
@@ -72,7 +73,7 @@ class Level(gym.Env):
         state = np.copy(self._current_env)
         state[self._r_start, self._c_start] = 8
         state = state.ravel()
-        state = np.array2string(state, separator="")
+        state = np.array2string(state, separator="") + str(self._block.get_focus())
 
         return state
 
@@ -101,7 +102,7 @@ class Level(gym.Env):
         state[r2, c2] = 8
 
         state = state.ravel()
-        state = np.array2string(state, separator="")
+        state = np.array2string(state, separator="") + str(self._block.get_focus())
 
         return state
 
@@ -173,7 +174,7 @@ class Level(gym.Env):
                 r2 = single_block_two[0]
                 c2 = single_block_two[1]
 
-                self._block.set_focus_block(1)
+                self._block.set_focus(1)
                 self._block.set_coords(r1, c1, r2, c2)
 
     def _handle_orange_tile(self, r1, c1, r2, c2):
@@ -188,7 +189,6 @@ class Level(gym.Env):
                 )
 
         # nothing happens if block is not vertical on an orange tile
-        return state
 
     def _perform_action(self, action):
         # Get the corresponding method from 'actions' and call it

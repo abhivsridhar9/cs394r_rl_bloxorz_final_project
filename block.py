@@ -124,13 +124,16 @@ class Block:
             case 2:
                 self._c2 -= 1
 
-    def set_focus_block(self, focus_block=1):
-        if focus_block == 0:
+    def toggle_focus(self):
+        if self._focus_block == 0:
             self._focus_block = 0
         elif self._focus_block == 1:
             self._focus_block = 2
         else:
             self._focus_block = 1
+
+    def set_focus(self, focus):
+        self._focus_block = focus
 
     def get_focus(self):
         return self._focus_block
@@ -138,6 +141,6 @@ class Block:
     def join_single_blocks(self):
         if self._focus_block == 1 or self._focus_block == 2:
             if abs(self._r1 - self._r2) == 1 and (self._c1 == self._c2):
-                self.set_focus_block(0)
+                self.set_focus(0)
             elif abs(self._c1 - self._c2) == 1 and (self._r1 == self._r2):
-                self.set_focus_block(0)
+                self.set_focus(0)
