@@ -105,6 +105,15 @@ def get_env(level):
             teleport_switches=level_nine_teleport_switches
         )
 
+    elif args.level == 10:
+        env = Level(
+            start_pos=(2, 12),
+            base_env=level_ten_env,
+            soft_switches=level_ten_soft_switches,
+            hard_switches=level_ten_hard_switches,
+            teleport_switches=level_ten_teleport_switches,
+        )
+
     return env
 
 def Q_learning(env, num_episodes, alpha, gamma, num_trials):
@@ -123,17 +132,17 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
         r_list = []
         for e in range(num_episodes):
             s, done = env.reset(), False
-
+            r_ep = 0
             while not done:
                 _, a = eps_greedy_action_select(Q, s)
                 s_prime, r, done = env.step(a)
                 Q_prime, _ = eps_greedy_action_select(Q, s_prime, eps=0)
                 Q[a][s] = Q[a][s] + alpha * (r + gamma * Q_prime - Q[a][s])
                 s = s_prime
-            r_val = validate(Q)
-            r_list.append(r_val)
-
-        r_count_trial += np.array(r_list)
+                r_ep += r
+            r_list.append(r_ep)
+            print(f"Episode {e} done | Reward = {r_ep}")
+        r_count_trial += np.clip(np.array(r_list), -200, 0)
 
     # Final Route
     print("----- Final Route ----- ")
@@ -160,7 +169,7 @@ if __name__ == "__main__":
         r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
         plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
     elif args.mode == "as":
-        for level in range(1,3):
+        for level in range(1,5):
             env = get_env(level)
             r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
             plt.plot(range(args.num_episodes), r_list, label=f"Level {level}")
