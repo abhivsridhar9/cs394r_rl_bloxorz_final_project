@@ -40,7 +40,7 @@ def eps_greedy_action_select(Q, s, eps=0.01):
                 max_Q = Q_i
                 a = i
         return max_Q, a
-    
+
 
 def validate(Q):
     s, done = env.reset(), False
@@ -91,20 +91,28 @@ if __name__ == "__main__":
         env = Level(
             start_pos=(4, 4),
             base_env=level_seven_env,
-            hard_switches=level_seven_hard_switches
+            hard_switches=level_seven_hard_switches,
         )
 
     elif args.level == 8:
         env = Level(
             start_pos=(6, 4),
             base_env=level_eight_env,
-            teleport_switches=level_eight_teleport_switches
+            teleport_switches=level_eight_teleport_switches,
         )
     elif args.level == 9:
         env = Level(
             start_pos=(4, 4),
             base_env=level_nine_env,
-            teleport_switches=level_nine_teleport_switches
+            teleport_switches=level_nine_teleport_switches,
+        )
+    elif args.level == 10:
+        env = Level(
+            start_pos=(2, 12),
+            base_env=level_ten_env,
+            soft_switches=level_ten_soft_switches,
+            hard_switches=level_ten_hard_switches,
+            teleport_switches=level_ten_teleport_switches,
         )
 
     # 0 -> Right
@@ -117,6 +125,7 @@ if __name__ == "__main__":
     act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
 
     for e in range(args.num_episodes):
+        print("e",e)
         s, done = env.reset(), False
 
         steps = 0
@@ -127,7 +136,7 @@ if __name__ == "__main__":
             Q_prime, _ = eps_greedy_action_select(Q, s_prime, eps=0)
             Q[a][s] = Q[a][s] + args.alpha * (r + args.gamma * Q_prime - Q[a][s])
             s = s_prime
-            
+
             r_total += r
             # print(f'Action: {a} | Focus: {env.get_block().get_focus()} | Reward: {r_total}')
             # print(env.get_state())
@@ -135,7 +144,7 @@ if __name__ == "__main__":
             #     input("Press enter to continue...")
             steps += 1
 
-        print(f'Finished ep {e}, total return: {r_total}')
+        print(f"Finished ep {e}, total return: {r_total}")
 
     # Final Route
     print("----- Final Route ----- ")
@@ -143,8 +152,8 @@ if __name__ == "__main__":
     r_total = 0
     step = 1
     while not done and step < 200:
-        _, a = eps_greedy_action_select(Q, s,0)
+        _, a = eps_greedy_action_select(Q, s, 0)
         s, r, done = env.step(a)
         print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
-        r_total+=1
+        r_total += 1
         step += 1
