@@ -11,8 +11,8 @@ def parse():
     parser.add_argument("--level", default=1, type=int)
     parser.add_argument("--gamma", default=1, type=float)
     parser.add_argument("--alpha", default=0.1, type=float)
-    parser.add_argument("--vis", action="store_true")
-    parser.set_defaults(vis=False)
+    parser.add_argument("--mode", default="s", type=str)
+    parser.add_argument("--num_trials", default=1, type=int)
     args = parser.parse_args()
     return args
 
@@ -52,16 +52,14 @@ def validate(Q):
         r_total += r
         step += 1
 
+    return r_total
+        
 
-if __name__ == "__main__":
-    args = parse()
-
-    print("Args: ", args)
-
-    if args.level == 1:
+def get_env(level):
+    if level == 1:
         env = Level(start_pos=(3, 6), base_env=level_one_env)
 
-    elif args.level == 2:
+    elif level == 2:
         env = Level(
             start_pos=(6, 3),
             base_env=level_two_env,
@@ -69,44 +67,47 @@ if __name__ == "__main__":
             hard_switches=level_two_hard_switches,
         )
 
-    elif args.level == 3:
+    elif level == 3:
         env = Level(start_pos=(4, 3), base_env=level_three_env)
 
-    elif args.level == 4:
+    elif level == 4:
         env = Level(start_pos=(6, 4), base_env=level_four_env)
 
-    elif args.level == 5:
+    elif level == 5:
         env = Level(
             start_pos=(2, 15),
             base_env=level_five_env,
             soft_switches=level_five_soft_switches,
         )
-    elif args.level == 6:
+    elif level == 6:
         env = Level(
             start_pos=(4, 3),
             base_env=level_six_env,
         )
 
-    elif args.level == 7:
+    elif level == 7:
         env = Level(
             start_pos=(4, 4),
             base_env=level_seven_env,
             hard_switches=level_seven_hard_switches
         )
 
-    elif args.level == 8:
+    elif level == 8:
         env = Level(
             start_pos=(6, 4),
             base_env=level_eight_env,
             teleport_switches=level_eight_teleport_switches
         )
-    elif args.level == 9:
+    elif level == 9:
         env = Level(
             start_pos=(4, 4),
             base_env=level_nine_env,
             teleport_switches=level_nine_teleport_switches
         )
 
+    return env
+
+def Q_learning(env, num_episodes, alpha, gamma, num_trials):
     # 0 -> Right
     # 1 -> Up
     # 2 -> Left
@@ -115,27 +116,24 @@ if __name__ == "__main__":
     Q = [{}, {}, {}, {}, {}]
 
     act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
+    
+    r_count_trial = np.zeros(num_episodes, dtype=np.float64)
+    
+    for t in range(num_trials):
+        r_list = []
+        for e in range(num_episodes):
+            s, done = env.reset(), False
 
-    for e in range(args.num_episodes):
-        s, done = env.reset(), False
+            while not done:
+                _, a = eps_greedy_action_select(Q, s)
+                s_prime, r, done = env.step(a)
+                Q_prime, _ = eps_greedy_action_select(Q, s_prime, eps=0)
+                Q[a][s] = Q[a][s] + alpha * (r + gamma * Q_prime - Q[a][s])
+                s = s_prime
+            r_val = validate(Q)
+            r_list.append(r_val)
 
-        steps = 0
-        r_total = 0
-        while not done:
-            _, a = eps_greedy_action_select(Q, s)
-            s_prime, r, done = env.step(a)
-            Q_prime, _ = eps_greedy_action_select(Q, s_prime, eps=0)
-            Q[a][s] = Q[a][s] + args.alpha * (r + args.gamma * Q_prime - Q[a][s])
-            s = s_prime
-            
-            r_total += r
-            # print(f'Action: {a} | Focus: {env.get_block().get_focus()} | Reward: {r_total}')
-            # print(env.get_state())
-            # if steps % 200 == 0:
-            #     input("Press enter to continue...")
-            steps += 1
-
-        print(f'Finished ep {e}, total return: {r_total}')
+        r_count_trial += np.array(r_list)
 
     # Final Route
     print("----- Final Route ----- ")
@@ -148,3 +146,30 @@ if __name__ == "__main__":
         print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
         r_total+=1
         step += 1
+        
+    return r_count_trial / num_trials
+
+
+if __name__ == "__main__":
+    args = parse()
+
+    print("Args: ", args)
+    
+    if args.mode == "s":
+        env = get_env(args.level)
+        r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
+        plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
+    elif args.mode == "as":
+        for level in range(1,3):
+            env = get_env(level)
+            r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
+            plt.plot(range(args.num_episodes), r_list, label=f"Level {level}")
+    elif args.mode == "o":
+        pass
+    
+    plt.title("Returns Across Episodes")
+    plt.legend()
+    plt.grid()
+    plt.xlabel("Episode")
+    plt.ylabel("Return")
+    plt.show()
