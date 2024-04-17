@@ -1,18 +1,19 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from sys import getsizeof
 from levels.level import Level
 from levels.env_config import *
 
 
 def parse():
     parser = argparse.ArgumentParser(description="Tabular Q-Learning")
-    parser.add_argument("--num_episodes", default=1000, type=int)
+    parser.add_argument("--num_episodes", default=5000, type=int)
     parser.add_argument("--level", default=1, type=int)
     parser.add_argument("--gamma", default=1, type=float)
     parser.add_argument("--alpha", default=0.1, type=float)
     parser.add_argument("--mode", default="s", type=str)
-    parser.add_argument("--num_trials", default=1, type=int)
+    parser.add_argument("--num_trials", default=10, type=int)
     args = parser.parse_args()
     return args
 
@@ -122,13 +123,16 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
     # 2 -> Left
     # 3 -> Down
     # 5 -> Switch Focus
-    Q = [{}, {}, {}, {}, {}]
 
     act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
     
+    # Metric trackers
     r_count_trial = np.zeros(num_episodes, dtype=np.float64)
+    step_count_trial = 0
+    dict_size_trial = 0
     
     for t in range(num_trials):
+        Q = [{}, {}, {}, {}, {}]
         r_list = []
         for e in range(num_episodes):
             s, done = env.reset(), False
@@ -140,12 +144,14 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
                 Q[a][s] = Q[a][s] + alpha * (r + gamma * Q_prime - Q[a][s])
                 s = s_prime
                 r_ep += r
+                step_count_trial += 1
             r_list.append(r_ep)
-            print(f"Episode {e} done | Reward = {r_ep}")
+            # print(f"Episode {e} done | Reward = {r_ep}")
         r_count_trial += np.clip(np.array(r_list), -200, 0)
+        dict_size_trial += getsizeof(str(Q)) # cast the dict to a string so we measure not just the reference pointers, but the actual key and value content size as well
 
     # Final Route
-    print("----- Final Route ----- ")
+    print("-------------------- Training Stats --------------------")
     s, done = env.reset(), False
     r_total = 0
     step = 1
@@ -155,6 +161,9 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
         print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
         r_total += 1
         step += 1
+    print(f"Avg. MACs                    : {2 * step_count_trial / num_trials}") # ~2 MACs per Q learning update
+    print(f"Avg. Mem Utilization (Bytes) : {dict_size_trial / num_trials}")
+    print("--------------------------------------------------------")
         
     return r_count_trial / num_trials
 
@@ -169,7 +178,7 @@ if __name__ == "__main__":
         r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
         plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
     elif args.mode == "as":
-        for level in range(1,5):
+        for level in range(1,11):
             env = get_env(level)
             r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
             plt.plot(range(args.num_episodes), r_list, label=f"Level {level}")
