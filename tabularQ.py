@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from pickle import dumps
 from sys import getsizeof
 from levels.level import Level
 from levels.env_config import *
@@ -148,7 +149,7 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
             r_list.append(r_ep)
             # print(f"Episode {e} done | Reward = {r_ep}")
         r_count_trial += np.clip(np.array(r_list), -200, 0)
-        dict_size_trial += getsizeof(str(Q)) # cast the dict to a string so we measure not just the reference pointers, but the actual key and value content size as well
+        dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
 
     # Final Route
     print("-------------------- Training Stats --------------------")
