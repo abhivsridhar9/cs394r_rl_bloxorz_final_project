@@ -162,7 +162,8 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
         print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
         r_total += 1
         step += 1
-    print(f"Avg. MACs                    : {2 * step_count_trial / num_trials}") # ~2 MACs per Q learning update
+    print(f"Avg. Steps                   : {step_count_trial / num_trials}")
+    print(f"Avg. MACs                    : {2 * (step_count_trial / num_trials)}") # ~2 MACs per Q learning update
     print(f"Avg. Mem Utilization (Bytes) : {dict_size_trial / num_trials}")
     print("--------------------------------------------------------")
         
@@ -179,7 +180,7 @@ if __name__ == "__main__":
         r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
         plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
     elif args.mode == "as":
-        for level in range(1,11):
+        for level in range(1,4):
             env = get_env(level)
             r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
             plt.plot(range(args.num_episodes), r_list, label=f"Level {level}")
