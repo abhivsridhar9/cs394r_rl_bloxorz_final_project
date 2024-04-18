@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pickle import dumps
 from sys import getsizeof
-from levels.level import Level
+from level import Level
 from levels.env_config import *
 
 
@@ -45,7 +45,7 @@ def eps_greedy_action_select(Q, s, eps=0.01):
 
 
 def validate(Q):
-    s, done = env.reset(), False
+    s, done = env.reset(0), False
     r_total = 0
     step = 1
     while not done and step < 200:
@@ -55,7 +55,7 @@ def validate(Q):
         step += 1
 
     return r_total
-        
+
 
 def get_env(level):
     if level == 1:
@@ -126,17 +126,17 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
     # 5 -> Switch Focus
 
     act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
-    
+
     # Metric trackers
     r_count_trial = np.zeros(num_episodes, dtype=np.float64)
     step_count_trial = 0
     dict_size_trial = 0
-    
+
     for t in range(num_trials):
         Q = [{}, {}, {}, {}, {}]
         r_list = []
         for e in range(num_episodes):
-            s, done = env.reset(), False
+            s, done = env.reset(0), False
             r_ep = 0
             while not done:
                 _, a = eps_greedy_action_select(Q, s)
@@ -153,7 +153,7 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
 
     # Final Route
     print("-------------------- Training Stats --------------------")
-    s, done = env.reset(), False
+    s, done = env.reset(0), False
     r_total = 0
     step = 1
     while not done and step < 200:
@@ -166,7 +166,7 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
     print(f"Avg. MACs                    : {2 * (step_count_trial / num_trials)}") # ~2 MACs per Q learning update
     print(f"Avg. Mem Utilization (Bytes) : {dict_size_trial / num_trials}")
     print("--------------------------------------------------------")
-        
+
     return r_count_trial / num_trials
 
 
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     args = parse()
 
     print("Args: ", args)
-    
+
     if args.mode == "s":
         env = get_env(args.level)
         r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
@@ -186,7 +186,7 @@ if __name__ == "__main__":
             plt.plot(range(args.num_episodes), r_list, label=f"Level {level}")
     elif args.mode == "o":
         pass
-    
+
     plt.title("Returns Across Episodes")
     plt.legend()
     plt.grid()

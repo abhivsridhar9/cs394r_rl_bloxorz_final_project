@@ -15,6 +15,10 @@ class Level(gym.Env):
         teleport_switches=np.array([]),
         render_mode=None,
     ):
+        self.action_space = gym.spaces.Discrete(5)
+
+        self.observation_space = base_env.ravel()
+
         self._r_start = start_pos[0]
         self._c_start = start_pos[1]
 
@@ -53,13 +57,12 @@ class Level(gym.Env):
             self._toggle_soft_switches(r1, c1, r2, c2)
             self._toggle_hard_switches(r1, c1, r2, c2)
 
-
-
         state = self._format_environment()
 
-        return state, reward, done
+        return state, reward, done, done, done
 
-    def reset(self):
+    def reset(self,seed=0):
+
         # set both of the agent's coords to (self._r_start,self._c_start) and (self._r_start,self._c_start)
         self._block.set_coords(
             self._r_start, self._c_start, self._r_start, self._c_start
@@ -73,9 +76,9 @@ class Level(gym.Env):
         state = np.copy(self._current_env)
         state[self._r_start, self._c_start] = 8
         state = state.ravel()
-        state = np.array2string(state, separator="") + str(self._block.get_focus())
+        # state = np.array2string(state, separator="") + str(self._block.get_focus())
 
-        return state
+        return state,"reset"
 
     def _move_to_start(self, r1, c1, r2, c2):
         if self._current_env[r1, c1] == 9 or self._current_env[r2, c2] == 9:
@@ -102,7 +105,7 @@ class Level(gym.Env):
         state[r2, c2] = 8
 
         state = state.ravel()
-        state = np.array2string(state, separator="") + str(self._block.get_focus())
+        # state = np.array2string(state, separator="") + str(self._block.get_focus())
 
         return state
 
@@ -159,7 +162,6 @@ class Level(gym.Env):
         for t in self._teleport_switches:
             switch_location = t["switch_location"]
             split_positions = t["split_positions"]
-
 
             if (r1 == switch_location[0] and c1 == switch_location[1]) and (
                 r2 == switch_location[0] and c2 == switch_location[1]
