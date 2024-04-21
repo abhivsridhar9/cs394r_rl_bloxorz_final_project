@@ -9,11 +9,11 @@ from levels.env_config import *
 
 def parse():
     parser = argparse.ArgumentParser(description="Tabular Q-Learning")
-    parser.add_argument("--num_episodes", default=5000, type=int)
+    parser.add_argument("--num_episodes", default=10000, type=int)
     parser.add_argument("--level", default=1, type=int)
     parser.add_argument("--gamma", default=1, type=float)
     parser.add_argument("--alpha", default=0.1, type=float)
-    parser.add_argument("--mode", default="s", type=str)
+    parser.add_argument("--mode", default="single_level", type=str)
     parser.add_argument("--num_trials", default=10, type=int)
     args = parser.parse_args()
     return args
@@ -60,6 +60,7 @@ def validate(Q):
 def get_env(level):
     if level == 1:
         env = Level(start_pos=(3, 6), base_env=level_one_env)
+        optimal_return = -6
 
     elif level == 2:
         env = Level(
@@ -68,12 +69,15 @@ def get_env(level):
             soft_switches=level_two_soft_switches,
             hard_switches=level_two_hard_switches,
         )
+        optimal_return = -16
 
     elif level == 3:
         env = Level(start_pos=(4, 3), base_env=level_three_env)
+        optimal_return = -18
 
     elif level == 4:
         env = Level(start_pos=(6, 4), base_env=level_four_env)
+        optimal_return = -27
 
     elif level == 5:
         env = Level(
@@ -81,11 +85,14 @@ def get_env(level):
             base_env=level_five_env,
             soft_switches=level_five_soft_switches,
         )
+        optimal_return = -32
+
     elif level == 6:
         env = Level(
             start_pos=(4, 3),
             base_env=level_six_env,
         )
+        optimal_return = -34
 
     elif level == 7:
         env = Level(
@@ -93,6 +100,7 @@ def get_env(level):
             base_env=level_seven_env,
             hard_switches=level_seven_hard_switches,
         )
+        optimal_return = -43
 
     elif level == 8:
         env = Level(
@@ -100,14 +108,17 @@ def get_env(level):
             base_env=level_eight_env,
             teleport_switches=level_eight_teleport_switches,
         )
+        optimal_return = -10
+
     elif level == 9:
         env = Level(
             start_pos=(4, 4),
             base_env=level_nine_env,
             teleport_switches=level_nine_teleport_switches
         )
+        optimal_return = -24
 
-    elif args.level == 10:
+    elif level == 10:
         env = Level(
             start_pos=(2, 12),
             base_env=level_ten_env,
@@ -115,10 +126,11 @@ def get_env(level):
             hard_switches=level_ten_hard_switches,
             teleport_switches=level_ten_teleport_switches,
         )
+        optimal_return = -57
 
-    return env
+    return env, optimal_return
 
-def Q_learning(env, num_episodes, alpha, gamma, num_trials):
+def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return):
     # 0 -> Right
     # 1 -> Up
     # 2 -> Left
@@ -133,8 +145,11 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
     dict_size_trial = 0
     
     for t in range(num_trials):
+        print(f'Starting trial {t}...')
         Q = [{}, {}, {}, {}, {}]
-        r_list = []
+        early_stop_buffer = np.ones(10, dtype=np.float64) * -1000
+        converged = False
+        step_count = 0
         for e in range(num_episodes):
             s, done = env.reset(), False
             r_ep = 0
@@ -145,11 +160,21 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
                 Q[a][s] = Q[a][s] + alpha * (r + gamma * Q_prime - Q[a][s])
                 s = s_prime
                 r_ep += r
-                step_count_trial += 1
-            r_list.append(r_ep)
-            # print(f"Episode {e} done | Reward = {r_ep}")
-        r_count_trial += np.clip(np.array(r_list), -200, 0)
-        dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
+                step_count += 1
+            r_count_trial[e] += r_ep
+            early_stop_buffer[e % 10] = r_ep # tracks the last fifty returns to determine convergence
+            if (not converged) and (np.mean(early_stop_buffer) > (optimal_return - 0.1)):
+                converged = True
+                print('Agent has converged to the optimal solution for this level...')
+                print('Training will continue, but statisticis for steps, MACs, and mem utilization are locked...')
+                dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
+                step_count_trial += step_count
+        
+        # if the agent did not reach early stopping save the stats still
+        if not converged:
+            dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
+            step_count_trial += step_count
+        
 
     # Final Route
     print("-------------------- Training Stats --------------------")
@@ -159,15 +184,15 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials):
     while not done and step < 200:
         _, a = eps_greedy_action_select(Q, s, 0)
         s, r, done = env.step(a)
-        print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
-        r_total += 1
+        r_total += r
         step += 1
+        print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
     print(f"Avg. Steps                   : {step_count_trial / num_trials}")
     print(f"Avg. MACs                    : {2 * (step_count_trial / num_trials)}") # ~2 MACs per Q learning update
     print(f"Avg. Mem Utilization (Bytes) : {dict_size_trial / num_trials}")
     print("--------------------------------------------------------")
         
-    return r_count_trial / num_trials
+    return (r_count_trial / num_trials)
 
 
 if __name__ == "__main__":
@@ -175,16 +200,20 @@ if __name__ == "__main__":
 
     print("Args: ", args)
     
-    if args.mode == "s":
-        env = get_env(args.level)
-        r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
+    if args.mode == "single_level":
+        print(f'Starting training for level {args.level}...')
+        env, optimal_return = get_env(args.level)
+        r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return)
+        print()
         plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
-    elif args.mode == "as":
-        for level in range(1,4):
-            env = get_env(level)
-            r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials)
+    elif args.mode == "by_level":
+        for level in range(1, 3):
+            print(f'Starting training for level {level}...')
+            env, optimal_return = get_env(level)
+            r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return)
+            print()
             plt.plot(range(args.num_episodes), r_list, label=f"Level {level}")
-    elif args.mode == "o":
+    elif args.mode == "by_playthrough":
         pass
     
     plt.title("Returns Across Episodes")
