@@ -195,6 +195,73 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return):
     return (r_count_trial / num_trials)
 
 
+def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials):
+    # 0 -> Right
+    # 1 -> Up
+    # 2 -> Left
+    # 3 -> Down
+    # 5 -> Switch Focus
+
+    act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
+    
+    # Metric trackers
+    r_count_trial = np.zeros(num_episodes, dtype=np.float64)
+    step_count_trial = 0
+    dict_size_trial = 0
+    
+    for t in range(num_trials):
+        print(f'Starting trial {t}...')
+        Q = [{}, {}, {}, {}, {}]
+        for e in range(num_episodes):
+            level = 1
+            env, _ = get_env(level)
+            s, done_lvl_ten, done = env.reset(), False, False
+            r_ep = 0
+            while not done_lvl_ten:
+                _, a = eps_greedy_action_select(Q, s)
+                s_prime, r, done = env.step(a)
+                Q_prime, _ = eps_greedy_action_select(Q, s_prime, eps=0)
+                Q[a][s] = Q[a][s] + alpha * (r + gamma * Q_prime - Q[a][s])
+                if done and (level != 10):
+                    # transition to the next level if the agent finished the current level and
+                    # the current level was not level ten
+                    print(f'Agent finished level {level}...')
+                    level += 1
+                    env, _ = get_env(level)
+                    s, done_lvl_ten, done = env.reset(), False, False
+                elif done and (level == 10):
+                    # signal that we are completely finished if the agent finished the current level
+                    # and the agent is on level ten
+                    done_lvl_ten = True
+                else:
+                    # update s to s_prime on all other transitions
+                    s = s_prime
+                r_ep += r
+                step_count_trial += 1
+            r_count_trial[e] += r_ep
+            
+        dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
+        
+
+    # Final Route
+    print("-------------------- Training Stats --------------------")
+    s, done = env.reset(), False
+    r_total = 0
+    step = 1
+    while not done and step < 1000:
+        _, a = eps_greedy_action_select(Q, s, 0)
+        s, r, done = env.step(a)
+        r_total += r
+        step += 1
+        print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
+    print(f"Avg. Steps                   : {step_count_trial / num_trials}")
+    print(f"Avg. MACs                    : {2 * (step_count_trial / num_trials)}") # ~2 MACs per Q learning update
+    print(f"Avg. Mem Utilization (Bytes) : {dict_size_trial / num_trials}")
+    print("--------------------------------------------------------")
+        
+    return (r_count_trial / num_trials)
+
+
 if __name__ == "__main__":
     args = parse()
 
@@ -214,7 +281,7 @@ if __name__ == "__main__":
             print()
             plt.plot(range(args.num_episodes), r_list, label=f"Level {level}")
     elif args.mode == "by_playthrough":
-        pass
+        Q_learning_by_playthrough(args.num_episodes, args.alpha, args.gamma, args.num_trials)
     
     plt.title("Returns Across Episodes")
     plt.legend()
