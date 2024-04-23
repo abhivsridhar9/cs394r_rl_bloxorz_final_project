@@ -14,8 +14,8 @@ def parse():
     parser.add_argument("--gamma", default=1, type=float)
     parser.add_argument("--alpha", default=0.1, type=float)
     parser.add_argument("--mode", default="single_level", type=str)
-    parser.add_argument("--num_trials", default=10, type=int)
-    parser.add_argument("--output_path", default="/TrainedLevels/result.txt", type=str)
+    parser.add_argument("--num_trials", default=25, type=int)
+    parser.add_argument("--output_dir", default="./TrainedLevels", type=str)
     args = parser.parse_args()
     return args
 
@@ -44,18 +44,6 @@ def eps_greedy_action_select(Q, s, eps=0.01):
                 a = i
         return max_Q, a
 
-
-def validate(Q):
-    s, done = env.reset(), False
-    r_total = 0
-    step = 1
-    while not done and step < 200:
-        _, a = eps_greedy_action_select(Q, s, 0)
-        s, r, done = env.step(a)
-        r_total += r
-        step += 1
-
-    return r_total
         
 
 def get_env(level):
@@ -130,6 +118,7 @@ def get_env(level):
         optimal_return = -57
 
     return env, optimal_return
+
 
 def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return, output_path):
     # 0 -> Right
@@ -301,18 +290,21 @@ if __name__ == "__main__":
     if args.mode == "single_level":
         print(f'Starting training for level {args.level}...')
         env, optimal_return = get_env(args.level)
-        r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return, args.output_path)
+        output_path = args.output_dir + f'/level-{args.level}.res'
+        r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return, output_path)
         print()
         plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
     elif args.mode == "by_level":
         for level in range(1, 3):
             print(f'Starting training for level {level}...')
             env, optimal_return = get_env(level)
-            r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return, args.output_path)
+            output_path = args.output_dir + f'/by-level-{level}.res'
+            r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return, output_path)
             print()
             plt.plot(range(args.num_episodes), r_list, label=f"By-Level")
     elif args.mode == "by_playthrough":
-        r_list = Q_learning_by_playthrough(args.num_episodes, args.alpha, args.gamma, args.num_trials, -267, args.output_path)
+        output_path = args.output_dir + '/by-playthrough.res'
+        r_list = Q_learning_by_playthrough(args.num_episodes, args.alpha, args.gamma, args.num_trials, -267, output_path)
         plt.plot(range(args.num_episodes), r_list, label=f"By-Playthrough")
     
     plt.title("Returns Across Episodes")
