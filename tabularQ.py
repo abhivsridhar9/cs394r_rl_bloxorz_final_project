@@ -31,7 +31,10 @@ def eps_greedy_action_select(Q, s, eps=0.01):
 
     """
     if np.random.uniform() < eps:
-        return -1, np.random.randint(0, 4)
+        a = np.random.randint(0, 4)
+        if s not in Q[a]:   # instantiate this state, action pair if it does not exist
+            Q[a][s] = 0
+        return -1, a
     else:
         max_Q = np.float64("-inf")
         a = 0
