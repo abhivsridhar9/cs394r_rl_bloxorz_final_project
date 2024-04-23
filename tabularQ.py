@@ -299,7 +299,7 @@ if __name__ == "__main__":
         plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
         plt.title(f"Level {args.level} Returns Across Episodes")
     elif args.mode == "by_level":
-        for level in range(1, 3):
+        for level in range(1, 11):
             print(f'Starting training for level {level}...')
             env, optimal_return = get_env(level)
             output_path = args.output_dir + f'/by-level-{level}.res'
