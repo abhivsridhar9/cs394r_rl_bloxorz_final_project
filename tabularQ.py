@@ -297,6 +297,7 @@ if __name__ == "__main__":
         r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return, output_path)
         print()
         plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
+        plt.title(f"Level {args.level} Returns Across Episodes")
     elif args.mode == "by_level":
         for level in range(1, 3):
             print(f'Starting training for level {level}...')
@@ -305,14 +306,15 @@ if __name__ == "__main__":
             r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return, output_path)
             print()
             plt.plot(range(args.num_episodes), r_list, label=f"By-Level")
+            plt.title("By-Level Returns Across Episodes")
     elif args.mode == "by_playthrough":
         output_path = args.output_dir + '/by-playthrough.res'
         r_list = Q_learning_by_playthrough(args.num_episodes, args.alpha, args.gamma, args.num_trials, -267, output_path)
         plt.plot(range(args.num_episodes), r_list, label=f"By-Playthrough")
+        plt.title("By-Playthrough Returns Across Episodes")
     
-    plt.title("Returns Across Episodes")
     plt.legend()
     plt.grid()
     plt.xlabel("Episode")
-    plt.ylabel("Return")
+    plt.ylabel("Average Return")
     plt.show()
