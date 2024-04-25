@@ -1,6 +1,5 @@
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 from pickle import dumps
 from sys import getsizeof
 from levels.level import Level
@@ -9,13 +8,13 @@ from levels.env_config import *
 
 def parse():
     parser = argparse.ArgumentParser(description="Tabular Q-Learning")
-    parser.add_argument("--num_episodes", default=10000, type=int)
+    parser.add_argument("--num_episodes", default=15000, type=int)
     parser.add_argument("--level", default=1, type=int)
     parser.add_argument("--gamma", default=1, type=float)
     parser.add_argument("--alpha", default=0.1, type=float)
     parser.add_argument("--mode", default="single_level", type=str)
-    parser.add_argument("--num_trials", default=25, type=int)
-    parser.add_argument("--output_dir", default="./TrainedLevels", type=str)
+    parser.add_argument("--num_trials", default=10, type=int)
+    parser.add_argument("--output_dir", default="./results", type=str)
     args = parser.parse_args()
     return args
 
@@ -48,6 +47,16 @@ def eps_greedy_action_select(Q, s, eps=0.01):
         return max_Q, a
 
         
+def validate(Q):
+    s, done = env.reset(), False
+    r_total = 0
+    step = 1
+    while not done and step < 200:
+        _, a = eps_greedy_action_select(Q, s, 0)
+        s, r, done = env.step(a)
+        r_total += r
+        step += 1
+    return r_total
 
 def get_env(level):
     if level == 1:
@@ -129,8 +138,6 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return, outp
     # 2 -> Left
     # 3 -> Down
     # 5 -> Switch Focus
-
-    act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
     
     # Metric trackers
     r_count_trial = np.zeros(num_episodes, dtype=np.float64)
@@ -154,17 +161,18 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return, outp
                 s = s_prime
                 r_ep += r
                 step_count += 1
+            # update the metric trackers with the results of the episode
             r_count_trial[e] += r_ep
-            early_stop_buffer[e % 10] = r_ep # tracks the last fifty returns to determine convergence
-            if (not converged) and (np.mean(early_stop_buffer) > (optimal_return - 0.1)):
+            early_stop_buffer[e % 10] = validate(Q)
+            if (not converged) and (np.mean(early_stop_buffer) == optimal_return):
                 converged = True
                 print('Agent has converged to the optimal solution for this level...')
-                print('Training will continue, but statisticis for steps, MACs, and mem utilization are locked...')
                 dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
                 step_count_trial += step_count
         
         # if the agent did not reach early stopping save the stats still
         if not converged:
+            print('Agent did not meet the standards for convergence...')
             dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
             step_count_trial += step_count
         
@@ -172,15 +180,11 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return, outp
     # Final Route
     print("-------------------- Training Stats --------------------")
     s, done = env.reset(), False
-    r_total = 0
     step = 1
     f = open(output_path, "w")
     while not done and step < 200:
         _, a = eps_greedy_action_select(Q, s, 0)
         s, r, done = env.step(a)
-        r_total += r
-        step += 1
-        print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
         f.write(str(a) + "\n")
     print(f"Avg. Steps                   : {step_count_trial / num_trials}")
     print(f"Avg. MACs                    : {2 * (step_count_trial / num_trials)}") # ~2 MACs per Q learning update
@@ -197,8 +201,6 @@ def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials, optimal_re
     # 2 -> Left
     # 3 -> Down
     # 5 -> Switch Focus
-
-    act_to_lang = {0: "Right", 1: "Up", 2: "Left", 3: "Down", 4: "Switch Focus"}
     
     # Metric trackers
     r_count_trial = np.zeros(num_episodes, dtype=np.float64)
@@ -236,17 +238,18 @@ def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials, optimal_re
                     s = s_prime
                 r_ep += r
                 step_count_trial += 1
+            # update the metric trackers with the results of the episode
             r_count_trial[e] += r_ep
-            early_stop_buffer[e % 10] = r_ep # tracks the last fifty returns to determine convergence
-            if (not converged) and (np.mean(early_stop_buffer) > (optimal_return - 0.1)):
+            early_stop_buffer[e % 10] = validate(Q)
+            if (not converged) and (np.mean(early_stop_buffer) == optimal_return):
                 converged = True
                 print('Agent has converged to the optimal solution for this level...')
-                print('Training will continue, but statisticis for steps, MACs, and mem utilization are locked...')
                 dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
                 step_count_trial += step_count
         
         # if the agent did not reach early stopping save the stats still
         if not converged:
+            print('Agent did not meet the standards for convergence...')
             dict_size_trial += getsizeof(dumps(Q)) # pickle the dict and check the size
             step_count_trial += step_count
         
@@ -255,25 +258,20 @@ def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials, optimal_re
     level = 1
     env, _ = get_env(level)
     s, done_lvl_ten, done = env.reset(), False, False
-    r_total = 0
     step = 1
     f = open(output_path, "w")
     while not done_lvl_ten and step < 1000:
         _, a = eps_greedy_action_select(Q, s, 0)
         s, r, done = env.step(a)
-        r_total += r
         step += 1
-        print(f"Action: {act_to_lang[a]} | Done: {done} | Reward: {r_total}")
         f.write(str(a) + "\n")
         if done and (level != 10):
-            # transition to the next level if the agent finished the current level and
-            # the current level was not level ten
+            # transition to the next level if the agent finished the current level and the current level was not level ten
             level += 1
             env, _ = get_env(level)
             s, done_lvl_ten, done = env.reset(), False, False
         elif done and (level == 10):
-            # signal that we are completely finished if the agent finished the current level
-            # and the agent is on level ten
+            # signal that we are completely finished if the agent finished the current level and the agent is on level ten
             done_lvl_ten = True
 
     print(f"Avg. Steps                   : {step_count_trial / num_trials}")
@@ -295,26 +293,19 @@ if __name__ == "__main__":
         env, optimal_return = get_env(args.level)
         output_path = args.output_dir + f'/level-{args.level}.res'
         r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return, output_path)
+        np.save(output_path[:-4], r_list)
         print()
-        plt.plot(range(args.num_episodes), r_list, label=f"Level {args.level}")
-        plt.title(f"Level {args.level} Returns Across Episodes")
     elif args.mode == "by_level":
         for level in range(1, 11):
             print(f'Starting training for level {level}...')
             env, optimal_return = get_env(level)
-            output_path = args.output_dir + f'/by-level-{level}.res'
+            output_path = args.output_dir + f'/level-{level}.res'
             r_list = Q_learning(env, args.num_episodes, args.alpha, args.gamma, args.num_trials, optimal_return, output_path)
+            np.save(output_path[:-4], r_list)
             print()
-            plt.plot(range(args.num_episodes), r_list, label=f"By-Level")
-            plt.title("By-Level Returns Across Episodes")
     elif args.mode == "by_playthrough":
         output_path = args.output_dir + '/by-playthrough.res'
         r_list = Q_learning_by_playthrough(args.num_episodes, args.alpha, args.gamma, args.num_trials, -267, output_path)
-        plt.plot(range(args.num_episodes), r_list, label=f"By-Playthrough")
-        plt.title("By-Playthrough Returns Across Episodes")
+        np.save(output_path[:-4], r_list)
+        
     
-    plt.legend()
-    plt.grid()
-    plt.xlabel("Episode")
-    plt.ylabel("Average Return")
-    plt.show()
