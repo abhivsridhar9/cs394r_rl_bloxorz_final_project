@@ -52,7 +52,8 @@ class Level(gym.Env):
             self._activate_teleport_switch(r1, c1, r2, c2)
             self._toggle_soft_switches(r1, c1, r2, c2)
             self._toggle_hard_switches(r1, c1, r2, c2)
-
+        else:
+            reward = -5
 
 
         state = self._format_environment()

@@ -19,7 +19,7 @@ def parse():
     return args
 
 
-def eps_greedy_action_select(Q, s, eps=0.01):
+def eps_greedy_action_select(Q, s, eps=0.1):
     """
     Chooses an action following the epsilon greedy policy.
     Inputs:
@@ -47,16 +47,17 @@ def eps_greedy_action_select(Q, s, eps=0.01):
         return max_Q, a
 
         
-def validate(Q):
+def validate(Q, env):
     s, done = env.reset(), False
     r_total = 0
     step = 1
     while not done and step < 200:
-        _, a = eps_greedy_action_select(Q, s, 0)
+        _, a = eps_greedy_action_select(Q, s, 0) # make the greedy selection
         s, r, done = env.step(a)
         r_total += r
         step += 1
     return r_total
+
 
 def get_env(level):
     if level == 1:
@@ -117,7 +118,7 @@ def get_env(level):
             base_env=level_nine_env,
             teleport_switches=level_nine_teleport_switches
         )
-        optimal_return = -24
+        optimal_return = -28
 
     elif level == 10:
         env = Level(
@@ -127,7 +128,7 @@ def get_env(level):
             hard_switches=level_ten_hard_switches,
             teleport_switches=level_ten_teleport_switches,
         )
-        optimal_return = -57
+        optimal_return = -61
 
     return env, optimal_return
 
@@ -163,7 +164,9 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return, outp
                 step_count += 1
             # update the metric trackers with the results of the episode
             r_count_trial[e] += r_ep
-            early_stop_buffer[e % 10] = validate(Q)
+            early_stop_buffer[e % 10] = validate(Q, env)
+            if e % 100 == 0:
+                print(np.mean(early_stop_buffer))
             if (not converged) and (np.mean(early_stop_buffer) == optimal_return):
                 converged = True
                 print('Agent has converged to the optimal solution for this level...')
@@ -179,6 +182,11 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return, outp
 
     # Final Route
     print("-------------------- Training Stats --------------------")
+    avg_returns = r_count_trial / num_trials
+    avg_steps = step_count_trial / num_trials
+    avg_macs = 2 * avg_steps
+    avg_bytes = dict_size_trial / num_trials
+
     s, done = env.reset(), False
     step = 1
     f = open(output_path, "w")
@@ -186,13 +194,15 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return, outp
         _, a = eps_greedy_action_select(Q, s, 0)
         s, r, done = env.step(a)
         f.write(str(a) + "\n")
-    print(f"Avg. Steps                   : {step_count_trial / num_trials}")
-    print(f"Avg. MACs                    : {2 * (step_count_trial / num_trials)}") # ~2 MACs per Q learning update
-    print(f"Avg. Mem Utilization (Bytes) : {dict_size_trial / num_trials}")
+    print(f"Avg. Steps                   : {avg_steps}")
+    print(f"Avg. MACs                    : {avg_macs}") # ~2 MACs per Q learning update
+    print(f"Avg. Mem Utilization (Bytes) : {avg_bytes}")
     print("--------------------------------------------------------")
     f.close()
-        
-    return (r_count_trial / num_trials)
+
+    results = np.concatenate((avg_returns, [avg_steps], [avg_macs], [avg_bytes]))
+
+    return results
 
 
 def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials, optimal_return, output_path):
@@ -240,7 +250,9 @@ def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials, optimal_re
                 step_count_trial += 1
             # update the metric trackers with the results of the episode
             r_count_trial[e] += r_ep
-            early_stop_buffer[e % 10] = validate(Q)
+            early_stop_buffer[e % 10] = validate(Q, env)
+            if e % 100 == 0:
+                print(np.mean(early_stop_buffer))
             if (not converged) and (np.mean(early_stop_buffer) == optimal_return):
                 converged = True
                 print('Agent has converged to the optimal solution for this level...')
@@ -255,6 +267,11 @@ def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials, optimal_re
         
     # Final Route
     print("-------------------- Training Stats --------------------")
+    avg_returns = r_count_trial / num_trials
+    avg_steps = step_count_trial / num_trials
+    avg_macs = 2 * avg_steps
+    avg_bytes = dict_size_trial / num_trials
+
     level = 1
     env, _ = get_env(level)
     s, done_lvl_ten, done = env.reset(), False, False
@@ -274,13 +291,15 @@ def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials, optimal_re
             # signal that we are completely finished if the agent finished the current level and the agent is on level ten
             done_lvl_ten = True
 
-    print(f"Avg. Steps                   : {step_count_trial / num_trials}")
-    print(f"Avg. MACs                    : {2 * (step_count_trial / num_trials)}") # ~2 MACs per Q learning update
-    print(f"Avg. Mem Utilization (Bytes) : {dict_size_trial / num_trials}")
+    print(f"Avg. Steps                   : {avg_steps}")
+    print(f"Avg. MACs                    : {avg_macs}") # ~2 MACs per Q learning update
+    print(f"Avg. Mem Utilization (Bytes) : {avg_bytes}")
     print("--------------------------------------------------------")
     f.close()
-        
-    return (r_count_trial / num_trials)
+
+    results = np.concatenate((avg_returns, [avg_steps], [avg_macs], [avg_bytes]))
+
+    return results
 
 
 if __name__ == "__main__":
@@ -305,7 +324,7 @@ if __name__ == "__main__":
             print()
     elif args.mode == "by_playthrough":
         output_path = args.output_dir + '/by-playthrough.res'
-        r_list = Q_learning_by_playthrough(args.num_episodes, args.alpha, args.gamma, args.num_trials, -267, output_path)
+        r_list = Q_learning_by_playthrough(args.num_episodes, args.alpha, args.gamma, args.num_trials, -275, output_path)
         np.save(output_path[:-4], r_list)
         
     
