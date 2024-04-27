@@ -8,12 +8,12 @@ from levels.env_config import *
 
 def parse():
     parser = argparse.ArgumentParser(description="Tabular Q-Learning")
-    parser.add_argument("--num_episodes", default=15000, type=int)
+    parser.add_argument("--num_episodes", default=2000, type=int)
     parser.add_argument("--level", default=1, type=int)
     parser.add_argument("--gamma", default=1, type=float)
     parser.add_argument("--alpha", default=0.1, type=float)
     parser.add_argument("--mode", default="single_level", type=str)
-    parser.add_argument("--num_trials", default=10, type=int)
+    parser.add_argument("--num_trials", default=25, type=int)
     parser.add_argument("--output_dir", default="./results", type=str)
     args = parser.parse_args()
     return args
@@ -56,6 +56,28 @@ def validate(Q, env):
         s, r, done = env.step(a)
         r_total += r
         step += 1
+    return r_total
+
+def validate_playthrough(Q):
+    level = 1
+    env, _ = get_env(level)
+    s, done_lvl_ten, done = env.reset(), False, False
+    r_total = 0
+    step = 1
+
+    while not done_lvl_ten and step < 300:
+        _, a = eps_greedy_action_select(Q, s, 0)
+        s, r, done = env.step(a)
+        step += 1
+        r_total += r
+        if done and (level != 10):
+            # transition to the next level if the agent finished the current level and the current level was not level ten
+            level += 1
+            env, _ = get_env(level)
+            s, done_lvl_ten, done = env.reset(), False, False
+        elif done and (level == 10):
+            # signal that we are completely finished if the agent finished the current level and the agent is on level ten
+            done_lvl_ten = True
     return r_total
 
 
@@ -165,8 +187,6 @@ def Q_learning(env, num_episodes, alpha, gamma, num_trials, optimal_return, outp
             # update the metric trackers with the results of the episode
             r_count_trial[e] += r_ep
             early_stop_buffer[e % 10] = validate(Q, env)
-            if e % 100 == 0:
-                print(np.mean(early_stop_buffer))
             if (not converged) and (np.mean(early_stop_buffer) == optimal_return):
                 converged = True
                 print('Agent has converged to the optimal solution for this level...')
@@ -250,9 +270,7 @@ def Q_learning_by_playthrough(num_episodes, alpha, gamma, num_trials, optimal_re
                 step_count_trial += 1
             # update the metric trackers with the results of the episode
             r_count_trial[e] += r_ep
-            early_stop_buffer[e % 10] = validate(Q, env)
-            if e % 100 == 0:
-                print(np.mean(early_stop_buffer))
+            early_stop_buffer[e % 10] = validate_playthrough(Q)
             if (not converged) and (np.mean(early_stop_buffer) == optimal_return):
                 converged = True
                 print('Agent has converged to the optimal solution for this level...')
