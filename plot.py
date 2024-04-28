@@ -176,21 +176,21 @@ per_dqn_res = np.load('./results/per_dqn.npy')
 dqn = {
     'label': 'DQN',
     'avg_steps': dqn_res[-1],
-    'avg_mem': 1490000,
+    'avg_mem': 1480000,
     'avg_macs': 780000 * dqn_res[-1]
 }
 
 double_dqn = {
     'label': 'Double DQN',
     'avg_steps': double_dqn_res[-1],
-    'avg_mem': 1490000,
+    'avg_mem': 1480000,
     'avg_macs': 780000 * double_dqn_res[-1]
 }
 
 per_dqn = {
     'label': 'Prioritized Replay',
     'avg_steps': per_dqn_res[-1],
-    'avg_mem': 1490000,
+    'avg_mem': 1480000,
     'avg_macs': 780000 * per_dqn_res[-1]
 }
 
@@ -234,5 +234,4 @@ for tick in ax.get_xticklabels():
     tick.set_rotation(30)
 plt.savefig('./figs/dqn_bytes.pdf')
 plt.clf()
-
 
