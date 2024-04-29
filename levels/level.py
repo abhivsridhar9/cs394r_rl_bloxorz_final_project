@@ -52,7 +52,12 @@ class Level(gym.Env):
             self._activate_teleport_switch(r1, c1, r2, c2)
             self._toggle_soft_switches(r1, c1, r2, c2)
             self._toggle_hard_switches(r1, c1, r2, c2)
-
+        else:
+            # if the action is to toggle focus, we penalize the agent more
+            # otherwise, we find that for levels 9 and 10 the agent can get stuck 
+            # sub-optimal solutions where it may use switch focus more than is needed
+            # a higher penalty empirically solves this issue
+            reward = -5
 
 
         state = self._format_environment()
