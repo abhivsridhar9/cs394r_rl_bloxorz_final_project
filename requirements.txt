@@ -15,6 +15,12 @@ networkx==3.3
 numpy==1.26.4
 packaging==24.0
 pillow==10.3.0
+pynput==1.7.6
+pyobjc-core==10.2
+pyobjc-framework-ApplicationServices==10.2
+pyobjc-framework-Cocoa==10.2
+pyobjc-framework-CoreText==10.2
+pyobjc-framework-Quartz==10.2
 pyparsing==3.1.2
 python-dateutil==2.9.0.post0
 six==1.16.0
