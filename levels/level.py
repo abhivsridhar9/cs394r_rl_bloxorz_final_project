@@ -10,8 +10,9 @@ class Level(gym.Env):
         self,
         start_pos: tuple,
         base_env: np.array([]),
-        circle_switches=np.array([]),
-        x_switches=np.array([]),
+        soft_switches=np.array([]),
+        hard_switches=np.array([]),
+        teleport_switches=np.array([]),
         render_mode=None,
     ):
         self._r_start = start_pos[0]
@@ -21,18 +22,22 @@ class Level(gym.Env):
 
         self._base_env = base_env
 
-        self._circle_switches = circle_switches
-        self._x_switches = x_switches
+        self._soft_switches = soft_switches
+        self._hard_switches = hard_switches
+        self._teleport_switches = teleport_switches
 
         self._actions = {
             0: self._block.move_right,
             1: self._block.move_up,
             2: self._block.move_left,
             3: self._block.move_down,
-            4: self._block.switch_focus
+            4: self._block.toggle_focus,
         }
 
     def step(self, action):
+        # if the block is split, check if single blocks are adjacent, and join together
+        self._block.join_single_blocks()
+
         # update the agent's coords by passing it the action
         self._perform_action(action)
 
@@ -44,8 +49,16 @@ class Level(gym.Env):
         # only check for environment changes if the action is not "Switch Focus"
         if action != 4:
             self._move_to_start(r1, c1, r2, c2)
-            self._toggle_circle_switches(r1, c1, r2, c2)
-            self._toggle_x_switches(r1, c1, r2, c2)
+            self._activate_teleport_switch(r1, c1, r2, c2)
+            self._toggle_soft_switches(r1, c1, r2, c2)
+            self._toggle_hard_switches(r1, c1, r2, c2)
+        else:
+            # if the action is to toggle focus, we penalize the agent more
+            # otherwise, we find that for levels 9 and 10 the agent can get stuck 
+            # sub-optimal solutions where it may use switch focus more than is needed
+            # a higher penalty empirically solves this issue
+            reward = -5
+
 
         state = self._format_environment()
 
@@ -56,6 +69,7 @@ class Level(gym.Env):
         self._block.set_coords(
             self._r_start, self._c_start, self._r_start, self._c_start
         )
+        self._block.set_focus(0)
 
         # reset the environment (important to undo any obstacle interactions)
         self._current_env = np.copy(self._base_env)
@@ -64,7 +78,7 @@ class Level(gym.Env):
         state = np.copy(self._current_env)
         state[self._r_start, self._c_start] = 8
         state = state.ravel()
-        state = np.array2string(state, separator="")
+        state = np.array2string(state, separator="") + str(self._block.get_focus())
 
         return state
 
@@ -93,13 +107,13 @@ class Level(gym.Env):
         state[r2, c2] = 8
 
         state = state.ravel()
-        state = np.array2string(state, separator="")
+        state = np.array2string(state, separator="") + str(self._block.get_focus())
 
         return state
 
-    def _toggle_circle_switches(self, r1, c1, r2, c2):
+    def _toggle_soft_switches(self, r1, c1, r2, c2):
         # check if the agent is on a circle switch -> activate bridge
-        for c in self._circle_switches:
+        for c in self._soft_switches:
             switch_location = c["switch_location"]
             toggle_tiles = c["toggle_tiles"]
             mode = c["mode"]
@@ -126,9 +140,9 @@ class Level(gym.Env):
                         self._current_env[t[0], t[1]] = 9
                         self._current_env[t[0], t[1]] = 9
 
-    def _toggle_x_switches(self, r1, c1, r2, c2):
+    def _toggle_hard_switches(self, r1, c1, r2, c2):
         # check if the agent is on an x switch -> activate bridge
-        for c in self._x_switches:
+        for c in self._hard_switches:
             switch_location = c["switch_location"]
             toggle_tiles = c["toggle_tiles"]
 
@@ -145,6 +159,29 @@ class Level(gym.Env):
                         self._current_env[t[0], t[1]] = 0
                         self._current_env[t[0], t[1]] = 0
 
+    def _activate_teleport_switch(self, r1, c1, r2, c2):
+        # check if block is on teleport switch -> split block into two single blocks
+        for t in self._teleport_switches:
+            switch_location = t["switch_location"]
+            split_positions = t["split_positions"]
+
+
+            if (r1 == switch_location[0] and c1 == switch_location[1]) and (
+                r2 == switch_location[0] and c2 == switch_location[1]
+            ):
+
+                single_block_one = split_positions[0]
+                single_block_two = split_positions[1]
+
+                r1 = single_block_one[0]
+                c1 = single_block_one[1]
+
+                r2 = single_block_two[0]
+                c2 = single_block_two[1]
+
+                self._block.set_focus(1)
+                self._block.set_coords(r1, c1, r2, c2)
+
     def _handle_orange_tile(self, r1, c1, r2, c2):
         # check if block is vertical
         if (r1, c1) == (r2, c2):
@@ -158,6 +195,15 @@ class Level(gym.Env):
 
         # nothing happens if block is not vertical on an orange tile
 
+    def _perform_action(self, action):
+        # Get the corresponding method from 'actions' and call it
+        action_method = self._actions.get(action)
+        if action_method:
+            action_method()
+
+        else:
+            print("Invalid action")
+
     def get_state(self):
         r1, c1, r2, c2 = self._block.get_coords()
         print(r1, c1, r2, c2)
@@ -167,10 +213,5 @@ class Level(gym.Env):
 
         return state
 
-    def _perform_action(self, action):
-        # Get the corresponding method from 'actions' and call it
-        action_method = self._actions.get(action)
-        if action_method:
-            action_method()
-        else:
-            print("Invalid action")
+    def get_block(self):
+        return self._block
