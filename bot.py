@@ -4,8 +4,8 @@ from time import sleep
 
 def parse():
     parser = argparse.ArgumentParser(description="Agent Arguments")
-    parser.add_argument("--mode", default="by_playthrough", type=str)
-    parser.add_argument("--input_file", default="./results/by-playthrough.res", type=str)
+    parser.add_argument("--mode", default="single_level", type=str)
+    parser.add_argument("--input_file", default="./results/level-1.res", type=str)
     args = parser.parse_args()
     return args
 
